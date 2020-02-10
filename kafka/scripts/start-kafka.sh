@@ -1,12 +1,17 @@
 #!/bin/sh
 
 # Optional ENV variables:
-# * ADVERTISED_HOST: the external ip for the container, e.g. `docker-machine ip \`docker-machine active\``
-# * ADVERTISED_PORT: the external port for Kafka, e.g. 9092
+# * ADVERTISED_LISTENERS: listeners to publish to zookeeper for external clients to use 
+# * (deprecated) ADVERTISED_HOST: the external ip for the container, e.g. `docker-machine ip \`docker-machine active\``
+# * (deprecated) ADVERTISED_PORT: the external port for Kafka, e.g. 9092
 # * ZK_CHROOT: the zookeeper chroot that's used by Kafka (without / prefix), e.g. "kafka"
 # * LOG_RETENTION_HOURS: the minimum age of a log file in hours to be eligible for deletion (default is 168, for 1 week)
 # * LOG_RETENTION_BYTES: configure the size at which segments are pruned from the log, (default is 1073741824, for 1GB)
 # * NUM_PARTITIONS: configure the default number of log partitions per topic
+ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+# Need to use a different delimiter for sed so '/' doesn't confuse it
+sed -r -i "s|#(advertised.listeners)=(.*)|\1=$ADVERTISED_LISTENERS|g" $KAFKA_HOME/config/server.properties
+sed -r -i "s|#(listeners)=(.*)|\1=PLAINTEXT://0.0.0.0:9092|g" $KAFKA_HOME/config/server.properties
 
 # Configure advertised host/port if we run in helios
 if [ ! -z "$HELIOS_PORT_kafka" ]; then
@@ -23,6 +28,7 @@ if [ ! -z "$ADVERTISED_HOST" ]; then
         echo "advertised.host.name=$ADVERTISED_HOST" >> $KAFKA_HOME/config/server.properties
     fi
 fi
+
 if [ ! -z "$ADVERTISED_PORT" ]; then
     echo "advertised port: $ADVERTISED_PORT"
     if grep -q "^advertised.port" $KAFKA_HOME/config/server.properties; then
