@@ -18,19 +18,38 @@ in the same container. This means:
 Run
 ---
 
+Note: If you are using docker-machine, replace `localhost` with the docker-machine IP, e.g. 
 ```bash
-docker run -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST=`docker-machine ip \`docker-machine active\`` --env ADVERTISED_PORT=9092 spotify/kafka
+`docker-machine ip \`docker-machine active\``
 ```
 
+Run the docker image:
 ```bash
-export KAFKA=`docker-machine ip \`docker-machine active\``:9092
-kafka-console-producer.sh --broker-list $KAFKA --topic test
+docker run -p 2181:2181 -p 9092:9092 algotastic/kafka
 ```
 
+(Only necessary if AUTO_CREATE_TOPICS is false) Create a topic:
 ```bash
-export ZOOKEEPER=`docker-machine ip \`docker-machine active\``:2181
-kafka-console-consumer.sh --zookeeper $ZOOKEEPER --topic test
+kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic test
 ```
+
+(Optional) List the topics:
+```bash
+kafka-topics.sh --list --bootstrap-server localhost:9092
+```
+
+Run a producer:
+```bash
+kafka-console-producer.sh --broker-list localhost:9092 --topic test
+```
+
+Run a consumer:
+```bash
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test
+```
+(While consuming messages from kafka using bootstrap-server parameter, the connection happens via the kafka server instead of zookeeper.)
+
+Now, put some messages on the Producer's console and you should see them appear in the consumer's console.
 
 Running the proxy
 -----------------
